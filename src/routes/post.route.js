@@ -1,6 +1,5 @@
 const router = require('express').Router()
-const { check } = require('express-validator');
-const { authenticate, upload, checkUserPrivilege, validate } = require('../middlewares');
+const { authenticate, upload, checkUserPrivilege } = require('../middlewares');
 const PostController = require('../controllers/post.controller');
 
 router.post('/', authenticate, upload.array('media', 10), PostController.createPost);
