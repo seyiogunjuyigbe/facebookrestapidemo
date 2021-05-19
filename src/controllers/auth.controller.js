@@ -1,10 +1,11 @@
-const User = require('../models/user');
-const Token = require('../models/token');
-
-const response = require('../middlewares/response');
-const { sendMail } = require('../services/message');
 const moment = require('moment');
 const crypto = require('crypto');
+
+const { User, Token } = require('../models')
+
+const { response } = require('../middlewares');
+const { sendMail } = require('../services/message');
+
 const { generateToken } = require('../services/jwtService');
 
 const { SITE_URL } = process.env;
@@ -34,7 +35,7 @@ module.exports = {
         role: newUser.role,
       });
       let link = `${SITE_URL}/verify/${emailToken.token}`;
-      const subject = 'Welcome to Legal Naija';
+      const subject = 'Welcome!';
       const mail = newUser.email;
       const body = `
       Hi <b>${newUser.firstName} ${newUser.lastName}</b>,

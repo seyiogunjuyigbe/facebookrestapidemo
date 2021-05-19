@@ -11,21 +11,6 @@ const storage = new CloudinaryStorage({
   },
 });
 
-const multiStorage = new CloudinaryStorage({
-  cloudinary,
-
-  params: {
-    folder: 'images',
-  },
-});
-const parser = multer({
-  // dest: __dirname + "../../uploads",
+module.exports = multer({
   storage,
 });
-const multiParser = multer({
-  storage: multiStorage,
-});
-module.exports = {
-  parser,
-  multiParser,
-};

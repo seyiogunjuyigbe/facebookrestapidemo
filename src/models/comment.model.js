@@ -5,7 +5,7 @@ const commentSchema = new Schema({
         type: String,
         required: true
     },
-    user: {
+    author: {
         type: Schema.Types.ObjectId,
         ref: "User"
     },
@@ -14,5 +14,13 @@ const commentSchema = new Schema({
         ref: "Post"
     }
 }, { timestamps: true });
-
+commentSchema.post('deleteOne', async (next) => {
+    try {
+        await Reaction.deleteMany({ reference: this._id });
+        next()
+    }
+    catch (err) {
+        throw err.message
+    }
+})
 module.exports = mongoose.model("Comment", commentSchema)

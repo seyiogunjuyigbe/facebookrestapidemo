@@ -6,6 +6,7 @@
   "scripts": {
     "test": "jest --detectOpenHandles --testTimeout 4000",
     "dev": "nodemon src/index.js",
+    "lint": "git add . && lint-staged && git add . && git commit -m  \"$npm_config_message\"",
     "start": "node index.js"
   },
   "keywords": [
@@ -23,6 +24,7 @@
     "dotenv": "^9.0.2",
     "express": "^4.17.1",
     "express-validator": "^6.11.1",
+    "http-errors": "^1.8.0",
     "jsonwebtoken": "^8.5.1",
     "lodash": "^4.17.21",
     "moment": "^2.29.1",

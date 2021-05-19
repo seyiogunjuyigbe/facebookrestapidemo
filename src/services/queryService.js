@@ -17,20 +17,16 @@ function processPopulate(query) {
 }
 
 const get = async (model, req, conditions = {}, multiple = true) => {
-  const { query } = req;
-  const { populate } = query;
+  let { query } = req;
+  const { populate, keyword, searchBy } = query;
   const limit = parseInt(query.limit || '10', 10);
   const offset = parseInt(query.offset || '0', 10);
   const orderBy = query.orderBy ? query.orderBy : 'createdAt';
   const order = query.order ? query.order : 'desc';
-
-  delete query.limit;
-  delete query.offset;
-  delete query.populate;
-  delete query.order;
-  delete query.orderBy;
-  // delete query.status;
-
+  if (keyword && searchBy) {
+    conditions[searchBy] = new RegExp(keyword, "i")
+  }
+  query = _.omit(query, ['limit', 'offset', 'populate', 'order', 'orderBy', 'searchBy', 'keyword'])
   if (!_.isEmpty(query)) {
     Object.keys(query).forEach(field => {
       let value = query[field];

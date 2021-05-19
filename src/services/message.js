@@ -3,21 +3,11 @@ const sgMail = require('@sendgrid/mail').setApiKey(SENDGRID_API_KEY);
 const fs = require('fs');
 
 module.exports = {
-  async sendMail(subject, to, body, bcc = [], link, linkText, files = []) {
-    let attachments = files.length
-      ? files.map(f => ({
-          content: fs.readFileSync(f.file).toString('base64'),
-          filename: f.title,
-          type: 'application/pdf',
-          disposition: 'attachment',
-        }))
-      : [];
+  async sendMail(subject, to, body, link, linkText) {
     const mailOptions = {
       to,
-      bcc,
       from: `${SENDER_NAME} <${MAIL_SENDER}>`,
       subject,
-      attachments,
       html: `<!DOCTYPE html PUBLIC "- //W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head>
@@ -300,9 +290,8 @@ module.exports = {
               ${body}
             </td>
           </tr>
-          ${
-            link && linkText
-              ? `<tr>
+          ${link && linkText
+          ? `<tr>
             <td class="button">
               <div><!--[if mso
     ]>
@@ -315,8 +304,8 @@ module.exports = {
               style="background-color:#ff6f6f;border-radius:5px;color:#ffffff;display:inline-block;font-family:'Cabin', Arial, sans-serif;font-size:14px;font-weight:regular;line-height:45px;text-align:center;text-decoration:none;width:155px;-webkit-text-size-adjust:none;mso-hide:all;">${linkText}</a></div>
             </td>
           </tr>`
-              : ''
-          }
+          : ''
+        }
           
         </table>
       </center>
@@ -329,9 +318,8 @@ module.exports = {
         <table cellspacing="0" cellpadding="0" width="600" class="w320">
           <tr>
             <td style="padding: 25px 0 25px">
-              <strong>Legal Naija</strong><br />
-            <!-- 11 Unity Road,--> <br />
-            <!-- Ikeja, Lagos --><br /><br />
+              <strong>${SENDER_NAME}</strong><br />
+           
             </td>
           </tr>
         </table>

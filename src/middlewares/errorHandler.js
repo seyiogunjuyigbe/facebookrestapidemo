@@ -3,7 +3,7 @@ const pluralize = require('pluralize');
 
 // eslint-disable-next-line
 module.exports = function errorHandler(err, req, res, next) {
-  console.error({ err });
+  // console.error({ err });
 
   if (err.code === 'ENOTFOUND') {
     return res.status(500).json({
@@ -27,13 +27,13 @@ module.exports = function errorHandler(err, req, res, next) {
     const tableName = vars[1].split(' ')[1].split('.')[1];
     const modelName = startCase(pluralize.singular(tableName));
     const fieldName = vars[2].split(' ')[1].split('_')[0];
-    console.log({
-      err,
-      vars,
-      tableName,
-      modelName,
-      fieldName,
-    });
+    // console.log({
+    //   err,
+    //   vars,
+    //   tableName,
+    //   modelName,
+    //   fieldName,
+    // });
     return res.status(400).json({
       message: `${modelName} with the ${fieldName} exists`,
       data: null,
@@ -46,7 +46,7 @@ module.exports = function errorHandler(err, req, res, next) {
     }
   }
   if (/^5/.test(err.status) || !err.status) {
-    const message = 'Something broke. We will fix it';
+    const { message } = err
     return res.status(500).json({ message, data: null });
   }
 

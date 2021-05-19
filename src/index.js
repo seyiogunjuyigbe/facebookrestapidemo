@@ -33,7 +33,7 @@ app.use(
 );
 app.use(morgan('dev'));
 
-app.use('/api/', routes);
+app.use(routes);
 app.get('/', (req, res) => res.json({ message: 'Hello World', data: null }));
 app.use(errorHandler);
 app.all('*', (req, res) =>
