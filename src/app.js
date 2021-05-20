@@ -6,14 +6,9 @@ const cors = require('cors');
 const morgan = require('morgan');
 
 require('dotenv').config();
+const databaseConnection = require('./db/index');
 
-const DB = require('./db/index');
-
-const { DB_URL, PORT } = process.env;
-
-new DB().connect(DB_URL);
-
-const port = PORT || 3000;
+new databaseConnection().connect(process.env.DB_URL);
 
 const errorHandler = require('./middlewares/errorHandler');
 const routes = require('./routes/index');
@@ -42,4 +37,6 @@ app.all('*', (req, res) =>
     data: null,
   })
 );
-app.listen(port, () => console.log(`API listening on port ${port}`));
+
+
+module.exports = app;

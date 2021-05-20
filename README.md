@@ -39,7 +39,7 @@ This is a representation of the Post functionality of Facebook
  7. Run `npm start` to start on a production server
  
 ##### Test Driven
-Tests are written with mocha, chai-http and chai.
+Tests are written with jest.
 
 #### Stack:
 * Express
