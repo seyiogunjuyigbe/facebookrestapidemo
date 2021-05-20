@@ -12,7 +12,7 @@ const { DB_URL, PORT } = process.env;
 
 new DB().connect(DB_URL);
 
-const port = process.env.port || 3000;
+const port = process.env.PORT || 3000;
 
 
 const errorHandler = require('./middlewares/errorHandler');
