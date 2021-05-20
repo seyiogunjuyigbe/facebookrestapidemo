@@ -17,6 +17,6 @@ const commentSchema = new Schema(
     },
     reactions: [{ type: Schema.Types.ObjectId, ref: 'Reaction' }],
   },
-  { timestamps: true }
+  { timestamps: true, bufferTimeoutMS: 30000 }
 );
 module.exports = mongoose.model('Comment', commentSchema);

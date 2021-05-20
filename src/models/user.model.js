@@ -46,7 +46,7 @@ const userSchema = new Schema(
       default: false,
     },
   },
-  { timestamps: true }
+  { timestamps: true, bufferTimeoutMS: 30000 }
 );
 // this is to remove the password from the user object when transformed
 userSchema.options.toJSON = {

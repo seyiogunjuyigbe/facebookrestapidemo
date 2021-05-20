@@ -20,7 +20,7 @@ const reactionSchema = new Schema(
       refPath: 'referenceType',
     },
   },
-  { timestamps: true }
+  { timestamps: true, bufferTimeoutMS: 30000 }
 );
 
 module.exports = mongoose.model('Reaction', reactionSchema);

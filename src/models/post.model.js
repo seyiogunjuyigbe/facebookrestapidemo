@@ -26,7 +26,7 @@ const postSchema = new Schema(
       default: 0,
     },
   },
-  { timestamps: true }
+  { timestamps: true, bufferTimeoutMS: 30000 }
 );
 
 // pre-save hook to ensure post has at least some text or media;
