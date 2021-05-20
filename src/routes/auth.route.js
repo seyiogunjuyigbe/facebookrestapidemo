@@ -25,25 +25,22 @@ router.post(
   Auth.login
 );
 router.get('/verify-email/:token', Auth.verify);
-router.get('/verify-token/resend', Auth.resendToken);
-router.get('/password/recover', Auth.recover);
+router.get('/request-verification', Auth.resendToken);
+router.get('/recover-password', Auth.recover);
 router.post(
-  '/password/reset/:token',
+  '/reset-password/:token',
   [
     check('password')
       .not()
       .isEmpty()
-      .isLength({ min: 6 })
-      .withMessage('Must be at least 8 chars long'),
-    check('confirmPassword', 'Passwords do not match').custom(
-      (value, { req }) => value === req.body.password
-    ),
+      .isLength({ min: 5 })
+      .withMessage('Must be at least 5 chars long'),
   ],
   validate,
   Auth.resetPassword
 );
 router.post(
-  '/password/change',
+  '/change-password',
   authenticate,
   [
     check('oldPassword')

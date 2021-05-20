@@ -35,8 +35,12 @@ router.post(
   ReactionController.createReaction
 );
 
-router.get('/', ReactionController.fetchReactions);
-router.get('/:reactionId', ReactionController.fetchSingleReaction);
+router.get('/', authenticate, ReactionController.fetchReactions);
+router.get(
+  '/:reactionId',
+  authenticate,
+  ReactionController.fetchSingleReaction
+);
 router.put(
   '/:reactionId',
   authenticate,

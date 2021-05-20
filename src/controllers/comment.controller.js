@@ -51,7 +51,7 @@ exports.updateComment = async (req, res, next) => {
     if (!comment) {
       return response(res, 404, 'comment not found');
     }
-    const updatedComment = await Comment.findById(comment._id);
+    const updatedComment = await Comment.findById(req.params.commentId);
     return response(res, 200, 'comment updated successfully', updatedComment);
   } catch (error) {
     next(error);

@@ -7,7 +7,7 @@ const reactionSchema = new Schema(
       type: String,
       enum: ['like', 'love', 'care', 'haha', 'wow', 'sad', 'angry'],
     },
-    user: {
+    author: {
       type: Schema.Types.ObjectId,
       ref: 'User',
     },

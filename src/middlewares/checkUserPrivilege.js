@@ -14,7 +14,7 @@ module.exports = function checkUserPrivilege(
           // eslint-disable-next-line
           condition[field] = Object.values(req.params)[0];
         }
-        const document = Models[model].findOne(condition);
+        const document = await Models[model].findOne(condition);
         if (!document)
           return response(res, 404, `${model.toLowerCase()} not found`);
         if (String(document[role]) !== String(req.user.id)) {

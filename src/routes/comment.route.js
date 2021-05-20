@@ -20,8 +20,8 @@ router.post(
   CommentController.createComment
 );
 
-router.get('/', CommentController.fetchComments);
-router.get('/:commentId', CommentController.fetchSingleComment);
+router.get('/', authenticate, CommentController.fetchComments);
+router.get('/:commentId', authenticate, CommentController.fetchSingleComment);
 router.put(
   '/:commentId',
   authenticate,

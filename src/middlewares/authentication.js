@@ -19,8 +19,8 @@ module.exports = function authenticateUser(req, res, next) {
             if (!req.user) {
               return response(res, 401, 'invalid token');
             }
-            if (req.user.status !== 'active' && req.user.role !== 'user') {
-              return response(res, 401, 'you are not authorized to do this');
+            if (!req.user.isVerified) {
+              return response(res, 401, 'please verify your email to continue');
             }
             next();
           } catch (error) {

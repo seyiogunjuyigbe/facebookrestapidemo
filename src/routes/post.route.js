@@ -8,8 +8,8 @@ router.post(
   upload.array('media', 10),
   PostController.createPost
 );
-router.get('/', PostController.fetchPosts);
-router.get('/:postId', PostController.fetchSinglePost);
+router.get('/', authenticate, PostController.fetchPosts);
+router.get('/:postId', authenticate, PostController.fetchSinglePost);
 router.put(
   '/:postId',
   authenticate,
@@ -21,7 +21,7 @@ router.delete(
   '/:postId',
   authenticate,
   checkUserPrivilege('Post'),
-  PostController.updatePost
+  PostController.deletePost
 );
 
 module.exports = router;

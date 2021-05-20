@@ -55,7 +55,7 @@ exports.updateReaction = async (req, res, next) => {
     if (!reaction) {
       return response(res, 404, 'reaction not found');
     }
-    const updatedReaction = await Reaction.findById(reaction._id);
+    const updatedReaction = await Reaction.findById(req.params.reactionId);
     return response(res, 200, 'reaction updated successfully', updatedReaction);
   } catch (error) {
     next(error);

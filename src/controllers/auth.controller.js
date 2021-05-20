@@ -10,7 +10,7 @@ const { generateToken } = require('../services/jwt.service');
 
 const { SITE_URL } = process.env;
 
-const randomToken = customAlphabet('QWERTYUPLKJHGFDAZXCVBNM23456789', 8);
+const randomToken = customAlphabet('QWERTYUPLKJHGFDAZXCVBNM23456789', 10);
 module.exports = {
   async register(req, res, next) {
     const { email } = req.body;
@@ -171,8 +171,7 @@ module.exports = {
       const subject = 'Account Verification';
       const message = `
                     Please click on the following link ${link} to verify your account. \n`;
-      console.log({ link });
-      await sendMail(subject, user.email, message, null, link, 'Verify Email');
+      await sendMail(subject, user.email, message, link, 'Verify Email');
       return response(res, 200, 'Verification mail sent successfully');
     } catch (err) {
       next(err);
@@ -181,6 +180,9 @@ module.exports = {
   async recover(req, res, next) {
     try {
       const { email } = req.query;
+      if (!email) {
+        return response(res, 400, 'please send a valid email');
+      }
       const user = await User.findOne({ email });
       if (!user)
         return response(
@@ -198,30 +200,20 @@ module.exports = {
         user,
         type: 'password-reset',
       });
-      const link = `${SITE_URL}/reset/${token.token}`;
-      console.log({ link });
+
       const subject = 'Reset Password';
-      const message = `Please click on the following link ${link} to reset your password.`;
-      await sendMail(
-        subject,
-        user.email,
-        message,
-        null,
-        link,
-        'Reset Password'
-      );
-      return response(
-        res,
-        200,
-        `A reset email has been sent to ${user.email}`,
-        link
-      );
+      const message = `Please use this code ${token.token} to reset your password.`;
+      await sendMail(subject, user.email, message);
+      return response(res, 200, `A reset email has been sent to ${user.email}`);
     } catch (err) {
       next(err);
     }
   },
   async resetPassword(req, res, next) {
     try {
+      if (!req.params.token) {
+        return response(res, 400, 'password reset token is required');
+      }
       const token = await Token.findOne({
         token: req.params.token,
         type: 'password-reset',
@@ -232,8 +224,6 @@ module.exports = {
           400,
           'We were unable to find a valid token. Your token my have expired.'
         );
-      console.log(token.user);
-
       if (
         token.expired ||
         moment.utc(token.expiresIn).diff(moment.utc(), 'minutes') < 0
@@ -262,7 +252,7 @@ module.exports = {
       const subject = 'Your password has been changed';
       const text = `This is a confirmation that the password for your account ${user.email} has just been changed.\n`;
       await sendMail(subject, user.email, text);
-      return response(res, 200, 'Your password has been updated.');
+      return response(res, 200, 'Your password has been updated. Please login');
     } catch (err) {
       next(err);
     }
