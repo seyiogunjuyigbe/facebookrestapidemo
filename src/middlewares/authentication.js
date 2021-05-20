@@ -1,6 +1,7 @@
-const getJWT = require('../services/jwtService');
+const getJWT = require('../services/jwt.service');
 const { User } = require('../models');
 const response = require('./response');
+
 module.exports = function authenticateUser(req, res, next) {
   if (req.headers && req.headers.authorization) {
     const parts = req.headers.authorization.split(' ');
@@ -18,7 +19,7 @@ module.exports = function authenticateUser(req, res, next) {
             if (!req.user) {
               return response(res, 401, 'invalid token');
             }
-            if (req.user.status !== 'active' && req.user.role !== "user") {
+            if (req.user.status !== 'active' && req.user.role !== 'user') {
               return response(res, 401, 'you are not authorized to do this');
             }
             next();
@@ -35,4 +36,4 @@ module.exports = function authenticateUser(req, res, next) {
   } else {
     return response(res, 401, 'No authorization header was found');
   }
-}
+};

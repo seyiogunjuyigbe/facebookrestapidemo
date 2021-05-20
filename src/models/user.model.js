@@ -17,7 +17,6 @@ const userSchema = new Schema(
       required: true,
       maxlength: 100,
     },
-    otherName: String,
     phone: {
       type: String,
       trim: true,
@@ -47,7 +46,7 @@ const userSchema = new Schema(
       default: false,
     },
   },
-  { timestamps: true, }
+  { timestamps: true }
 );
 // this is to remove the password from the user object when transformed
 userSchema.options.toJSON = {

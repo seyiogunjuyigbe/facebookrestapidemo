@@ -1,4 +1,5 @@
 const express = require('express');
+
 const app = express();
 
 const cors = require('cors');
@@ -6,14 +7,13 @@ const morgan = require('morgan');
 
 require('dotenv').config();
 
-
 const DB = require('./db/index');
+
 const { DB_URL, PORT } = process.env;
 
 new DB().connect(DB_URL);
 
-const port = process.env.PORT || 3000;
-
+const port = PORT || 3000;
 
 const errorHandler = require('./middlewares/errorHandler');
 const routes = require('./routes/index');

@@ -41,12 +41,12 @@ module.exports = function errorHandler(err, req, res, next) {
   }
   if (err.message) {
     if (err.message.match(/validation failed/i)) {
-      let message = err.message.replace(/[^]*validation failed: /g, '');
+      const message = err.message.replace(/[^]*validation failed: /g, '');
       return res.status(400).json({ message, data: null });
     }
   }
   if (/^5/.test(err.status) || !err.status) {
-    const { message } = err
+    const { message } = err;
     return res.status(500).json({ message, data: null });
   }
 

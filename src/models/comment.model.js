@@ -1,26 +1,22 @@
 const mongoose = require('mongoose');
+
 const { Schema } = mongoose;
-const commentSchema = new Schema({
+const commentSchema = new Schema(
+  {
     text: {
-        type: String,
-        required: true
+      type: String,
+      required: true,
     },
     author: {
-        type: Schema.Types.ObjectId,
-        ref: "User"
+      type: Schema.Types.ObjectId,
+      ref: 'User',
     },
     post: {
-        type: Schema.Types.ObjectId,
-        ref: "Post"
-    }
-}, { timestamps: true });
-commentSchema.post('deleteOne', async (next) => {
-    try {
-        await Reaction.deleteMany({ reference: this._id });
-        next()
-    }
-    catch (err) {
-        throw err.message
-    }
-})
-module.exports = mongoose.model("Comment", commentSchema)
+      type: Schema.Types.ObjectId,
+      ref: 'Post',
+    },
+    reactions: [{ type: Schema.Types.ObjectId, ref: 'Reaction' }],
+  },
+  { timestamps: true }
+);
+module.exports = mongoose.model('Comment', commentSchema);

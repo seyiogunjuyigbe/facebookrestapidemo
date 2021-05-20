@@ -6,10 +6,10 @@ const response = require('./response');
 const validate = require('./validate');
 
 module.exports = {
-    authenticate,
-    checkUserPrivilege,
-    errorHandler,
-    upload,
-    response,
-    validate
-}
+  authenticate,
+  checkUserPrivilege,
+  errorHandler,
+  upload,
+  response,
+  validate,
+};

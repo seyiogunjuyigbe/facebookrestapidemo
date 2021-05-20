@@ -24,11 +24,19 @@ const get = async (model, req, conditions = {}, multiple = true) => {
   const orderBy = query.orderBy ? query.orderBy : 'createdAt';
   const order = query.order ? query.order : 'desc';
   if (keyword && searchBy) {
-    conditions[searchBy] = new RegExp(keyword, "i")
+    conditions[searchBy] = new RegExp(keyword, 'i');
   }
-  query = _.omit(query, ['limit', 'offset', 'populate', 'order', 'orderBy', 'searchBy', 'keyword'])
+  query = _.omit(query, [
+    'limit',
+    'offset',
+    'populate',
+    'order',
+    'orderBy',
+    'searchBy',
+    'keyword',
+  ]);
   if (!_.isEmpty(query)) {
-    Object.keys(query).forEach(field => {
+    Object.keys(query).forEach((field) => {
       let value = query[field];
       switch (value) {
         case 'true':
@@ -48,7 +56,7 @@ const get = async (model, req, conditions = {}, multiple = true) => {
 
   if (!multiple && !conditions._id) {
     const { params } = req;
-    const paramId = Object.keys(params).find(param =>
+    const paramId = Object.keys(params).find((param) =>
       param.toLowerCase().includes('id')
     );
     conditions._id = req.params[paramId];
@@ -58,7 +66,7 @@ const get = async (model, req, conditions = {}, multiple = true) => {
 
   if (populate) {
     if (Array.isArray(populate) && populate.length) {
-      populate.forEach(field => {
+      populate.forEach((field) => {
         q = q.populate(processPopulate(field));
       });
     } else {

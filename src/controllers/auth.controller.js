@@ -1,14 +1,16 @@
 const moment = require('moment');
-const crypto = require('crypto');
+const { customAlphabet } = require('nanoid');
 
-const { User, Token } = require('../models')
+const { User, Token } = require('../models');
 
 const { response } = require('../middlewares');
-const { sendMail } = require('../services/message');
+const { sendMail } = require('../services/mail.service');
 
-const { generateToken } = require('../services/jwtService');
+const { generateToken } = require('../services/jwt.service');
 
 const { SITE_URL } = process.env;
+
+const randomToken = customAlphabet('QWERTYUPLKJHGFDAZXCVBNM23456789', 8);
 module.exports = {
   async register(req, res, next) {
     const { email } = req.body;
@@ -22,7 +24,7 @@ module.exports = {
       });
 
       const emailToken = await Token.create({
-        token: crypto.randomBytes(20).toString('hex'),
+        token: randomToken(),
         user: newUser._id,
         type: 'verify-email',
         expiresIn: moment.utc().add(1, 'day'),
@@ -34,7 +36,7 @@ module.exports = {
         email: newUser.email,
         role: newUser.role,
       });
-      let link = `${SITE_URL}/verify/${emailToken.token}`;
+      const link = `${SITE_URL}/verify/${emailToken.token}`;
       const subject = 'Welcome!';
       const mail = newUser.email;
       const body = `
@@ -63,7 +65,7 @@ module.exports = {
   async login(req, res, next) {
     try {
       const { email, password } = req.body;
-      let user = await User.findOne({ email });
+      const user = await User.findOne({ email });
       if (!user) {
         return response(res, 401, 'Invalid email or password');
       }
@@ -72,8 +74,8 @@ module.exports = {
         return response(res, 401, 'Invalid email or password');
       }
       // Login responseful, write token, and send back user
-      let { firstName, lastName, id, role } = user;
-      let token = generateToken({
+      const { firstName, lastName, id, role } = user;
+      const token = generateToken({
         id,
         firstName,
         lastName,
@@ -118,7 +120,7 @@ module.exports = {
         );
       }
       // If we found a token, find a matching user
-      let { user } = token;
+      const { user } = token;
       if (!user)
         return response(
           res,
@@ -160,14 +162,14 @@ module.exports = {
         expired: false,
       });
       const token = await Token.create({
-        token: crypto.randomBytes(20).toString('hex'),
+        token: randomToken(),
         expiresIn: moment.utc().add(1, 'hours'),
         user,
         type: 'verify-email',
       });
-      let link = `${SITE_URL}/verify/${token.token}`;
-      let subject = 'Account Verification';
-      let message = `
+      const link = `${SITE_URL}/verify/${token.token}`;
+      const subject = 'Account Verification';
+      const message = `
                     Please click on the following link ${link} to verify your account. \n`;
       console.log({ link });
       await sendMail(subject, user.email, message, null, link, 'Verify Email');
@@ -191,15 +193,15 @@ module.exports = {
         { expired: true }
       );
       const token = await Token.create({
-        token: crypto.randomBytes(20).toString('hex'),
+        token: randomToken(),
         expiresIn: moment.utc().add(1, 'hours'),
         user,
         type: 'password-reset',
       });
-      let link = `${SITE_URL}/reset/${token.token}`;
+      const link = `${SITE_URL}/reset/${token.token}`;
       console.log({ link });
-      let subject = 'Reset Password';
-      let message = `Please click on the following link ${link} to reset your password.`;
+      const subject = 'Reset Password';
+      const message = `Please click on the following link ${link} to reset your password.`;
       await sendMail(
         subject,
         user.email,
@@ -245,7 +247,7 @@ module.exports = {
           'Verification link expired. Please request a new one'
         );
       }
-      let { user } = token;
+      const { user } = token;
       if (!user)
         return response(
           res,
@@ -257,8 +259,8 @@ module.exports = {
       user.isVerified = true;
       await user.save();
       // send email
-      let subject = 'Your password has been changed';
-      let text = `This is a confirmation that the password for your account ${user.email} has just been changed.\n`;
+      const subject = 'Your password has been changed';
+      const text = `This is a confirmation that the password for your account ${user.email} has just been changed.\n`;
       await sendMail(subject, user.email, text);
       return response(res, 200, 'Your password has been updated.');
     } catch (err) {
@@ -275,8 +277,8 @@ module.exports = {
       req.user.password = req.body.password;
       await req.user.save();
       // send email
-      let subject = 'Your password has been changed';
-      let message = `This is a confirmation that the password for your account ${req.user.email} has just been changed.\n`;
+      const subject = 'Your password has been changed';
+      const message = `This is a confirmation that the password for your account ${req.user.email} has just been changed.\n`;
       await sendMail(subject, req.user.email, message);
       return response(res, 200, 'Your password has been updated.');
     } catch (err) {

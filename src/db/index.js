@@ -16,7 +16,7 @@ class DB {
       .then(async () => {
         console.info(`successfully connected to ${DB_URL}`);
       })
-      .catch(err => {
+      .catch((err) => {
         console.error(`There was a db connection error ${err}`);
         process.exit(0);
       });

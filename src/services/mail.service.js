@@ -1,6 +1,5 @@
 const { SENDGRID_API_KEY, MAIL_SENDER, SENDER_NAME } = process.env;
 const sgMail = require('@sendgrid/mail').setApiKey(SENDGRID_API_KEY);
-const fs = require('fs');
 
 module.exports = {
   async sendMail(subject, to, body, link, linkText) {
@@ -290,8 +289,9 @@ module.exports = {
               ${body}
             </td>
           </tr>
-          ${link && linkText
-          ? `<tr>
+          ${
+            link && linkText
+              ? `<tr>
             <td class="button">
               <div><!--[if mso
     ]>
@@ -304,8 +304,8 @@ module.exports = {
               style="background-color:#ff6f6f;border-radius:5px;color:#ffffff;display:inline-block;font-family:'Cabin', Arial, sans-serif;font-size:14px;font-weight:regular;line-height:45px;text-align:center;text-decoration:none;width:155px;-webkit-text-size-adjust:none;mso-hide:all;">${linkText}</a></div>
             </td>
           </tr>`
-          : ''
-        }
+              : ''
+          }
           
         </table>
       </center>

@@ -38,7 +38,7 @@ exports.formatDate = function formatDate(str) {
   return m.utc(str.replace(/\//g, '-')).format('YYYY-MM-DD');
 };
 
-exports.createReference = type => {
+exports.createReference = (type) => {
   const randomChars = Math.random().toString(32).substr(8);
   let prefix = 'LGN_';
   switch (type) {
