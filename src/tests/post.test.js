@@ -15,7 +15,7 @@ const wrongPostId = ObjectId();
 const dummyAuthorId = ObjectId();
 const wrongMongoId = "qwertyuiop";
 
-describe("POSTS", () => {
+describe("POST ROUTES", () => {
   before((done) => {
     chai
       .request(app)
@@ -355,7 +355,7 @@ describe("POSTS", () => {
     it("it updates an existing post", (done) => {
       chai
         .request(app)
-        .put(`posts/${postId}`)
+        .put(`/posts/${postId}`)
         .set({ Authorization: `Bearer ${authToken}` })
         .set("content-type", "multipart/form-data")
         .field("text", "this is an update to a random facebok post")
@@ -377,7 +377,7 @@ describe("POSTS", () => {
     it("it returns a 403 error if user is not author", (done) => {
       chai
         .request(app)
-        .put(`posts/${dummyPostId}`)
+        .put(`/posts/${dummyPostId}`)
         .set("Authorization", `Bearer ${authToken}`)
         .end((error, res) => {
           expect(error).to.be.null;
@@ -506,7 +506,7 @@ describe("POSTS", () => {
     it("it returns a 403 error if user is not author", (done) => {
       chai
         .request(app)
-        .delete(`posts/${dummyPostId}`)
+        .delete(`/posts/${dummyPostId}`)
         .set("Authorization", `Bearer ${authToken}`)
         .end((error, res) => {
           expect(error).to.be.null;

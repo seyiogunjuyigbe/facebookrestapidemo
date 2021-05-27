@@ -9,14 +9,17 @@ let authToken;
 let postId;
 let userId;
 let commentId;
+let reactionId;
+let dummyReactionId;
 let dummyCommentId;
-const { Comment, Post } = require("../models");
+const { Comment, Post, Reaction } = require("../models");
 const wrongPostId = ObjectId();
 const wrongCommentId = ObjectId();
+const wrongReactionId = ObjectId();
 const dummyAuthorId = ObjectId();
 const wrongMongoId = "qwertyuiop";
 
-describe("POST COMMENT ROUTES", () => {
+describe("POST REACTION ROUTES", () => {
   before((done) => {
     chai
       .request(app)
@@ -31,18 +34,30 @@ describe("POST COMMENT ROUTES", () => {
         Post.create({ text: "dummy post", author: userId }, (err, post) => {
           postId = post._id;
           Comment.create(
-            {
-              text: "another dummy post",
-              post: post._id,
-              author: dummyAuthorId,
-            },
+            { text: "another dummy post", post: post._id, author: userId },
             (err, dummyComment) => {
               dummyCommentId = dummyComment._id;
-              Comment.create(
-                { text: "an author comment", post: post._id, author: userId },
-                (err, comment) => {
-                  commentId = comment._id;
-                  done();
+              Reaction.create(
+                {
+                  type: "like",
+                  referenceType: "Post",
+                  reference: post._id,
+                  author: userId,
+                },
+                (err, reaction) => {
+                  reactionId = reaction._id;
+                  Reaction.create(
+                    {
+                      type: "love",
+                      referenceType: "Comment",
+                      reference: dummyComment._id,
+                      author: dummyAuthorId,
+                    },
+                    (err, dummyReaction) => {
+                      dummyReactionId = dummyReaction._id;
+                      done();
+                    }
+                  );
                 }
               );
             }
@@ -50,15 +65,16 @@ describe("POST COMMENT ROUTES", () => {
         });
       });
   });
-  describe("CREATE COMMENT", () => {
+  describe("CREATE REACTION", () => {
     it("it creates a new comment to an existing post", (done) => {
       chai
         .request(app)
-        .post("/comments")
+        .post("/reactions")
         .set({ Authorization: `Bearer ${authToken}` })
         .send({
-          text: "this is a comment to a random facebook post",
-          postId,
+          type: "love",
+          referenceType: "Post",
+          referenceId: postId,
         })
         .end((error, res) => {
           expect(error).to.be.null;
@@ -67,22 +83,19 @@ describe("POST COMMENT ROUTES", () => {
           expect(res.body).to.have.property("message");
           expect(res.body).to.have.property("data");
           expect(res.body.data).to.have.deep.property("_id");
-          expect(res.body.data).to.have.deep.property("text");
           expect(res.body.data).to.have.deep.property("author");
-          expect(res.body.data.text).to.equal(
-            "this is a comment to a random facebook post"
-          );
           expect(res.body.data.author).to.equal(userId);
           done();
         });
     });
-    it("it returns a 400 error if comment body is empty", (done) => {
+    it("it returns a 400 error if reaction type is empty", (done) => {
       chai
         .request(app)
-        .post("/comments")
+        .post("/reactions")
         .set("Authorization", `Bearer ${authToken}`)
         .send({
-          postId,
+          referenceType: "Post",
+          referenceId: postId,
         })
         .end((error, res) => {
           expect(error).to.be.null;
@@ -90,18 +103,19 @@ describe("POST COMMENT ROUTES", () => {
           expect(res).to.have.status(400);
           expect(res.body).to.have.property("data");
           expect(res.body).to.have.property("message");
-          expect(res.body.data).to.have.property("text");
           expect(res.body.message).to.equal("request validation failed");
           done();
         });
     });
-    it("it returns a 400 error if postId field is empty", (done) => {
+    it("it returns a 400 error if reaction type is not valid", (done) => {
       chai
         .request(app)
-        .post("/comments")
+        .post("/reactions")
         .set("Authorization", `Bearer ${authToken}`)
         .send({
-          text: "this is a comment to a random facebook post",
+          type: "wrongType",
+          referenceType: "Post",
+          referenceId: postId,
         })
         .end((error, res) => {
           expect(error).to.be.null;
@@ -109,19 +123,18 @@ describe("POST COMMENT ROUTES", () => {
           expect(res).to.have.status(400);
           expect(res.body).to.have.property("data");
           expect(res.body).to.have.property("message");
-          expect(res.body.data).to.have.property("postId");
           expect(res.body.message).to.equal("request validation failed");
           done();
         });
     });
-    it("it returns a 400 error if postId is a wrong mongo id", (done) => {
+    it("it returns a 400 error if reference ID field is empty", (done) => {
       chai
         .request(app)
-        .post("/comments")
+        .post("/reactions")
         .set("Authorization", `Bearer ${authToken}`)
         .send({
-          text: "this is a comment to a random facebook post",
-          postId: wrongMongoId,
+          type: "love",
+          referenceType: "Post",
         })
         .end((error, res) => {
           expect(error).to.be.null;
@@ -129,19 +142,82 @@ describe("POST COMMENT ROUTES", () => {
           expect(res).to.have.status(400);
           expect(res.body).to.have.property("data");
           expect(res.body).to.have.property("message");
-          expect(res.body.data).to.have.property("postId");
+          expect(res.body.data).to.have.property("referenceId");
           expect(res.body.message).to.equal("request validation failed");
           done();
         });
     });
-    it("it returns a 404 error if post is not found", (done) => {
+    it("it returns a 400 error if referenceId is a wrong mongo id", (done) => {
       chai
         .request(app)
-        .post("/comments")
+        .post("/reactions")
         .set("Authorization", `Bearer ${authToken}`)
         .send({
-          text: "this is a comment to a random facebook post",
-          postId: wrongPostId,
+          type: "love",
+          referenceType: "Post",
+          referenceId: wrongMongoId,
+        })
+        .end((error, res) => {
+          expect(error).to.be.null;
+          expect(res).to.exist;
+          expect(res).to.have.status(400);
+          expect(res.body).to.have.property("data");
+          expect(res.body).to.have.property("message");
+          expect(res.body.data).to.have.property("referenceId");
+          expect(res.body.message).to.equal("request validation failed");
+          done();
+        });
+    });
+    it("it returns a 400 error if referenceType field is empty", (done) => {
+      chai
+        .request(app)
+        .post("/reactions")
+        .set("Authorization", `Bearer ${authToken}`)
+        .send({
+          type: "love",
+          referenceId: postId,
+        })
+        .end((error, res) => {
+          expect(error).to.be.null;
+          expect(res).to.exist;
+          expect(res).to.have.status(400);
+          expect(res.body).to.have.property("data");
+          expect(res.body).to.have.property("message");
+          expect(res.body.data).to.have.property("referenceType");
+          expect(res.body.message).to.equal("request validation failed");
+          done();
+        });
+    });
+    it("it returns a 400 error if referenceType is incorrect", (done) => {
+      chai
+        .request(app)
+        .post("/reactions")
+        .set("Authorization", `Bearer ${authToken}`)
+        .send({
+          type: "love",
+          referenceId: postId,
+          referenceType: "invalidType",
+        })
+        .end((error, res) => {
+          expect(error).to.be.null;
+          expect(res).to.exist;
+          expect(res).to.have.status(400);
+          expect(res.body).to.have.property("data");
+          expect(res.body).to.have.property("message");
+          expect(res.body.data).to.have.property("referenceType");
+          expect(res.body.message).to.equal("request validation failed");
+          done();
+        });
+    });
+    it("it returns a 404 error if reference is not found", (done) => {
+      chai
+        .request(app)
+        .post("/reactions")
+        .set("Authorization", `Bearer ${authToken}`)
+        .send({
+          type: "love",
+          referenceId: wrongPostId,
+          referenceType: "Post",
         })
         .end((error, res) => {
           expect(error).to.be.null;
@@ -150,17 +226,18 @@ describe("POST COMMENT ROUTES", () => {
           expect(res.body).to.have.property("data");
           expect(res.body).to.have.property("message");
           expect(res.body.data).to.be.null;
-          expect(res.body.message).to.equal("post not found");
+          expect(res.body.message).to.equal("reference not found");
           done();
         });
     });
     it("it sends a 401 error if authorization token is absent or incorrect", (done) => {
       chai
         .request(app)
-        .post("/comments")
+        .post("/reactions")
         .send({
-          text: "this is a comment to a random facebook post",
-          postId: wrongPostId,
+          type: "love",
+          referenceId: postId,
+          referenceType: "Post",
         })
         .end((error, res) => {
           expect(error).to.be.null;
@@ -173,11 +250,11 @@ describe("POST COMMENT ROUTES", () => {
         });
     });
   });
-  describe("FETCH COMMENTS", () => {
-    it("it fetches comments", (done) => {
+  describe("FETCH REACTIONS", () => {
+    it("it fetches reactions", (done) => {
       chai
         .request(app)
-        .get("/comments")
+        .get("/reactions")
         .set("Authorization", `Bearer ${authToken}`)
         .end((error, res) => {
           expect(error).to.be.null;
@@ -194,10 +271,10 @@ describe("POST COMMENT ROUTES", () => {
           done();
         });
     });
-    it("it fetches comments for a post", (done) => {
+    it("it fetches reactions for a post or comment", (done) => {
       chai
         .request(app)
-        .get(`/comments?post=${postId}`)
+        .get(`/reactions?post=${postId}`)
         .set("Authorization", `Bearer ${authToken}`)
         .end((error, res) => {
           expect(error).to.be.null;
@@ -214,10 +291,10 @@ describe("POST COMMENT ROUTES", () => {
           done();
         });
     });
-    it("it should return an empty array for a wrong postId", (done) => {
+    it("it should return an empty array for a wrong referenceId", (done) => {
       chai
         .request(app)
-        .get(`/comments?post=${wrongPostId}`)
+        .get(`/reactions?post=${wrongPostId}`)
         .set("Authorization", `Bearer ${authToken}`)
         .end((error, res) => {
           expect(error).to.be.null;
@@ -234,10 +311,10 @@ describe("POST COMMENT ROUTES", () => {
           done();
         });
     });
-    it("it returns a 400 error if postId is a wrong mongo id", (done) => {
+    it("it returns a 400 error if referenceId is a wrong mongo id", (done) => {
       chai
         .request(app)
-        .get(`/comments?post=${wrongMongoId}`)
+        .get(`/reactions?reference=${wrongMongoId}`)
         .set("Authorization", `Bearer ${authToken}`)
         .end((error, res) => {
           expect(error).to.be.null;
@@ -253,7 +330,7 @@ describe("POST COMMENT ROUTES", () => {
     it("it returns a 401 error if request is unauthenticated", (done) => {
       chai
         .request(app)
-        .get("/comments")
+        .get("/reactions")
         .end((error, res) => {
           expect(error).to.be.null;
           expect(res).to.exist;
@@ -267,11 +344,11 @@ describe("POST COMMENT ROUTES", () => {
         });
     });
   });
-  describe("FETCH COMMENT", () => {
-    it("it fetches a single comment", (done) => {
+  describe("FETCH REACTION", () => {
+    it("it fetches a single reaction", (done) => {
       chai
         .request(app)
-        .get(`/comments/${dummyCommentId}`)
+        .get(`/reactions/${reactionId}`)
         .set("Authorization", `Bearer ${authToken}`)
         .end((error, res) => {
           expect(error).to.be.null;
@@ -284,14 +361,15 @@ describe("POST COMMENT ROUTES", () => {
           expect(res.body.message).to.be.a("string");
           expect(res.body.data).to.be.an("object");
           expect(res.body.data).to.haveOwnProperty("_id");
-          expect(res.body.data).to.haveOwnProperty("text");
+          expect(res.body.data).to.haveOwnProperty("type");
+          expect(res.body.data).to.haveOwnProperty("author");
           done();
         });
     });
-    it("it returns a 404 error if comment is not found", (done) => {
+    it("it returns a 404 error if reaction is not found", (done) => {
       chai
         .request(app)
-        .get(`/comments/${wrongCommentId}`)
+        .get(`/reactions/${wrongReactionId}`)
         .set("Authorization", `Bearer ${authToken}`)
         .end((error, res) => {
           expect(error).to.be.null;
@@ -302,14 +380,14 @@ describe("POST COMMENT ROUTES", () => {
           expect(res.body).to.haveOwnProperty("message");
           expect(res.body.data).to.be.a("null");
           expect(res.body.message).to.be.a("string");
-          expect(res.body.message).to.equal("comment not found");
+          expect(res.body.message).to.equal("reaction not found");
           done();
         });
     });
-    it("it returns a 400 error if comment id is an invalid object id", (done) => {
+    it("it returns a 400 error if reactionId is an invalid object id", (done) => {
       chai
         .request(app)
-        .get(`/comments/${wrongMongoId}`)
+        .get(`/reactions/${wrongMongoId}`)
         .set("Authorization", `Bearer ${authToken}`)
         .end((error, res) => {
           expect(error).to.be.null;
@@ -326,7 +404,7 @@ describe("POST COMMENT ROUTES", () => {
     it("it returns a 401 error if authorization is absent or incorrect", (done) => {
       chai
         .request(app)
-        .get(`/comments/${dummyCommentId}`)
+        .get(`/reactions/${dummyReactionId}`)
         .end((error, res) => {
           expect(error).to.be.null;
           expect(res).to.exist;
@@ -340,13 +418,13 @@ describe("POST COMMENT ROUTES", () => {
         });
     });
   });
-  describe("UPDATE COMMENT", () => {
-    it("it updates an existing comment", (done) => {
+  describe("UPDATE REACTION", () => {
+    it("it updates an existing reaction", (done) => {
       chai
         .request(app)
-        .put(`/comments/${commentId}`)
+        .put(`/reactions/${reactionId}`)
         .set({ Authorization: `Bearer ${authToken}` })
-        .send({ text: "this is an update to a random facebok comment" })
+        .send({ type: "like" })
         .end((error, res) => {
           expect(error).to.be.null;
           expect(res).to.exist;
@@ -354,17 +432,15 @@ describe("POST COMMENT ROUTES", () => {
           expect(res.body).to.have.property("message");
           expect(res.body).to.have.property("data");
           expect(res.body.data).to.have.deep.property("_id");
-          expect(res.body.data).to.have.deep.property("text");
-          expect(res.body.data.text).to.equal(
-            "this is an update to a random facebok comment"
-          );
+          expect(res.body.data).to.have.deep.property("type");
+          expect(res.body.data.type).to.equal("like");
           done();
         });
     });
     it("it returns a 403 error if user is not author", (done) => {
       chai
         .request(app)
-        .put(`/comments/${dummyCommentId}`)
+        .put(`/reactions/${dummyReactionId}`)
         .set("Authorization", `Bearer ${authToken}`)
         .send({
           text: "this is an update to a comment",
@@ -386,10 +462,10 @@ describe("POST COMMENT ROUTES", () => {
     it("it returns a 404 error if comment is not found", (done) => {
       chai
         .request(app)
-        .put(`/comments/${wrongCommentId}`)
+        .put(`/reactions/${wrongReactionId}`)
         .set("Authorization", `Bearer ${authToken}`)
         .send({
-          text: "this is an update to a comment",
+          type: "haha",
         })
         .end((error, res) => {
           expect(error).to.be.null;
@@ -400,17 +476,17 @@ describe("POST COMMENT ROUTES", () => {
           expect(res.body).to.haveOwnProperty("message");
           expect(res.body.data).to.be.a("null");
           expect(res.body.message).to.be.a("string");
-          expect(res.body.message).to.equal("comment not found");
+          expect(res.body.message).to.equal("reaction not found");
           done();
         });
     });
     it("it returns a 400 error if post id is an invalid object id", (done) => {
       chai
         .request(app)
-        .put(`/comments/${wrongMongoId}`)
+        .put(`/reactions/${wrongMongoId}`)
         .set("Authorization", `Bearer ${authToken}`)
         .send({
-          text: "this is an update to a comment",
+          type: "haha",
         })
         .end((error, res) => {
           expect(error).to.be.null;
@@ -427,9 +503,9 @@ describe("POST COMMENT ROUTES", () => {
     it("it sends a 401 error if authorization token is absent or incorrect", (done) => {
       chai
         .request(app)
-        .put(`/comments/${commentId}`)
+        .put(`/reactions/${reactionId}`)
         .send({
-          text: "this is an update to a comment",
+          type: "haha",
         })
         .end((error, res) => {
           expect(error).to.be.null;
@@ -439,11 +515,11 @@ describe("POST COMMENT ROUTES", () => {
         });
     });
   });
-  describe("DELETE COMMENT", () => {
-    it("it deletes an existing comment", (done) => {
+  describe("DELETE REACTION", () => {
+    it("it deletes an existing reaction", (done) => {
       chai
         .request(app)
-        .delete(`/comments/${commentId}`)
+        .delete(`/reactions/${reactionId}`)
         .set("Authorization", `Bearer ${authToken}`)
         .end((error, res) => {
           expect(error).to.be.null;
@@ -457,10 +533,10 @@ describe("POST COMMENT ROUTES", () => {
           done();
         });
     });
-    it("it returns a 404 error if comment is not found", (done) => {
+    it("it returns a 404 error if reaction is not found", (done) => {
       chai
         .request(app)
-        .delete(`/comments/${wrongCommentId}`)
+        .delete(`/reactions/${wrongReactionId}`)
         .set("Authorization", `Bearer ${authToken}`)
         .end((error, res) => {
           expect(error).to.be.null;
@@ -471,14 +547,14 @@ describe("POST COMMENT ROUTES", () => {
           expect(res.body).to.haveOwnProperty("message");
           expect(res.body.data).to.be.a("null");
           expect(res.body.message).to.be.a("string");
-          expect(res.body.message).to.equal("comment not found");
+          expect(res.body.message).to.equal("reaction not found");
           done();
         });
     });
-    it("it returns a 400 error if comment id is an invalid object id", (done) => {
+    it("it returns a 400 error if reaction id is an invalid object id", (done) => {
       chai
         .request(app)
-        .delete(`/comments/${wrongMongoId}`)
+        .delete(`/reactions/${wrongMongoId}`)
         .set("Authorization", `Bearer ${authToken}`)
         .end((error, res) => {
           expect(error).to.be.null;
@@ -495,7 +571,7 @@ describe("POST COMMENT ROUTES", () => {
     it("it returns a 403 error if user is not author", (done) => {
       chai
         .request(app)
-        .delete(`/comments/${dummyCommentId}`)
+        .delete(`/reactions/${dummyReactionId}`)
         .set("Authorization", `Bearer ${authToken}`)
         .end((error, res) => {
           expect(error).to.be.null;
@@ -514,7 +590,7 @@ describe("POST COMMENT ROUTES", () => {
     it("it returns a 401 error if authorization is absent or incorrect", (done) => {
       chai
         .request(app)
-        .delete(`/comments/${commentId}`)
+        .delete(`/reactions/${reactionId}`)
         .end((error, res) => {
           expect(error).to.be.null;
           expect(res).to.exist;
