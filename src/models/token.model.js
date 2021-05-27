@@ -19,4 +19,11 @@ const tokenSchema = new Schema(
   },
   { timestamps: true }
 );
-module.exports = mongoose.model('token', tokenSchema);
+let Token;
+try {
+  Token = mongoose.model('Token');
+} catch (error) {
+  Token = mongoose.model('Token', tokenSchema);
+}
+
+module.exports = Token;

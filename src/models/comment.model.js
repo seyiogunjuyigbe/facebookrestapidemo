@@ -19,4 +19,12 @@ const commentSchema = new Schema(
   },
   { timestamps: true, bufferTimeoutMS: 30000 }
 );
-module.exports = mongoose.model('Comment', commentSchema);
+// this is to prevent mongoose from attempting to re-model the collection during recursive testing
+let Comment;
+try {
+  Comment = mongoose.model('Comment');
+} catch (error) {
+  Comment = mongoose.model('Comment', commentSchema);
+}
+
+module.exports = Comment;

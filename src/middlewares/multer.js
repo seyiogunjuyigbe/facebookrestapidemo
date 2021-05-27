@@ -6,9 +6,10 @@ const { cloudinaryConfig } = require('../config/cloudinary');
 cloudinaryConfig();
 const storage = new CloudinaryStorage({
   cloudinary,
-  params: {
-    folder: 'content',
-  },
+  params: (req, file) => ({
+    folder: 'media',
+    resource_type: file.mimetype.includes('image') ? 'image' : 'video',
+  }),
 });
 
 module.exports = multer({

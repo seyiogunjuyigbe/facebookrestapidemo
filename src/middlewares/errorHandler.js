@@ -21,7 +21,12 @@ module.exports = function errorHandler(err, req, res, next) {
       data: null,
     });
   }
-
+  if (err.message && err.message.includes('Unsupported video format or file')) {
+    return res.status(400).json({
+      message: `invalid media file sent`,
+      data: null,
+    });
+  }
   if (err.code === 11000) {
     const vars = err.message.split(':');
     const tableName = vars[1].split(' ')[1].split('.')[1];

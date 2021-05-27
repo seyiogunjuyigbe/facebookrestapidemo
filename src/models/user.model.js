@@ -76,4 +76,11 @@ userSchema.pre('save', function preSave(next) {
     });
   });
 });
-module.exports = mongoose.model('User', userSchema);
+let User;
+try {
+  User = mongoose.model('User');
+} catch (error) {
+  User = mongoose.model('User', userSchema);
+}
+
+module.exports = User;

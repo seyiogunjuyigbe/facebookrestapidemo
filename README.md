@@ -39,7 +39,11 @@ This is a representation of the Post functionality of Facebook
  7. Run `npm start` to start on a production server
  
 ##### Test Driven
-Tests are written with jest.
+Tests are written with mocha and chai.
+
+You can use these test login credentials if so desired:
+`email: testuser@mail.com`
+`password: "testPass`
 
 #### Stack:
 * Express

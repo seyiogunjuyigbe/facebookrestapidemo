@@ -6,10 +6,15 @@ const cors = require('cors');
 const morgan = require('morgan');
 
 require('dotenv').config();
-const databaseConnection = require('./db/index');
+const DatabaseConnection = require('./db/index');
 
-new databaseConnection().connect(process.env.DB_URL);
+new DatabaseConnection().connect(process.env.DB_URL);
 
+const seedTestUser = require('./seeders/app');
+
+seedTestUser().catch((e) => {
+  console.log(e);
+});
 const errorHandler = require('./middlewares/errorHandler');
 const routes = require('./routes/index');
 
@@ -26,9 +31,11 @@ app.use(
     extended: true,
   })
 );
+// if (process.env.NODE_ENV !== "test") {
 app.use(morgan('dev'));
-
+// }
 app.use(routes);
+
 app.get('/', (req, res) => res.json({ message: 'Hello World', data: null }));
 app.use(errorHandler);
 app.all('*', (req, res) =>
@@ -37,6 +44,5 @@ app.all('*', (req, res) =>
     data: null,
   })
 );
-
 
 module.exports = app;

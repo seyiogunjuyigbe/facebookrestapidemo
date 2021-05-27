@@ -1,4 +1,5 @@
 const moment = require('moment');
+const _ = require('lodash');
 const { customAlphabet } = require('nanoid');
 
 const { User, Token } = require('../models');
@@ -19,6 +20,7 @@ module.exports = {
       if (existingUser) {
         return response(res, 409, 'An account with this email already exists');
       }
+      req.body = _.omit(req.body, ['status', 'isVerified']);
       const newUser = await User.create({
         ...req.body,
       });

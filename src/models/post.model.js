@@ -37,4 +37,11 @@ postSchema.pre('save', function checkPostFields(next) {
   next();
 });
 
-module.exports = mongoose.model('Post', postSchema);
+let Post;
+try {
+  Post = mongoose.model('Post');
+} catch (error) {
+  Post = mongoose.model('Post', postSchema);
+}
+
+module.exports = Post;

@@ -23,4 +23,11 @@ const reactionSchema = new Schema(
   { timestamps: true, bufferTimeoutMS: 30000 }
 );
 
-module.exports = mongoose.model('Reaction', reactionSchema);
+let Reaction;
+try {
+  Reaction = mongoose.model('Reaction');
+} catch (error) {
+  Reaction = mongoose.model('Reaction', reactionSchema);
+}
+
+module.exports = Reaction;
