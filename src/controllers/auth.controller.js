@@ -117,8 +117,8 @@ module.exports = {
         await token.save();
         return response(
           res,
-          403,
-          'Verification link expired. Please request a new onw'
+          400,
+          'Verification link expired. Please request a new one'
         );
       }
       // If we found a token, find a matching user
@@ -141,7 +141,7 @@ module.exports = {
       next(err);
     }
   },
-  async resendToken(req, res, next) {
+  async sendVerificationToken(req, res, next) {
     try {
       const { email } = req.query;
       if (!email) return response(res, 400, 'Email required');
@@ -255,24 +255,6 @@ module.exports = {
       const text = `This is a confirmation that the password for your account ${user.email} has just been changed.\n`;
       await sendMail(subject, user.email, text);
       return response(res, 200, 'Your password has been updated. Please login');
-    } catch (err) {
-      next(err);
-    }
-  },
-
-  async changePassword(req, res, next) {
-    try {
-      if (!req.user.comparePassword(req.body.oldPassword)) {
-        return response(res, 401, 'Invalid password');
-      }
-      // Set the new password
-      req.user.password = req.body.password;
-      await req.user.save();
-      // send email
-      const subject = 'Your password has been changed';
-      const message = `This is a confirmation that the password for your account ${req.user.email} has just been changed.\n`;
-      await sendMail(subject, req.user.email, message);
-      return response(res, 200, 'Your password has been updated.');
     } catch (err) {
       next(err);
     }
