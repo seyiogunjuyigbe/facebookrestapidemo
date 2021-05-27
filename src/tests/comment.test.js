@@ -9,13 +9,15 @@ const { expect } = chai;
 let authToken;
 let postId;
 let userId;
-let dummyPostId;
-const { Post } = require("../models");
+let commentId;
+let dummyCommentId;
+const { Comment, Post } = require("../models");
 const wrongPostId = ObjectId();
+const wrongCommentId = ObjectId();
 const dummyAuthorId = ObjectId();
 const wrongMongoId = "qwertyuiop";
 
-describe("POSTS", () => {
+describe("COMMENTS", () => {
   before((done) => {
     chai
       .request(app)
@@ -29,27 +31,32 @@ describe("POSTS", () => {
         userId = res.body.data.user._id;
         Post.create({ text: "dummy post", author: userId }, (err, post) => {
           postId = post._id;
-          Post.create(
+          Comment.create(
             { text: "another dummy post", author: dummyAuthorId },
-            (err, dummyPost) => {
-              dummyPostId = dummyPost._id;
-              done();
+            (err, dummyComment) => {
+              dummyCommentId = dummyComment._id;
+              Comment.create(
+                { text: "an author comment", author: userId },
+                (err, comment) => {
+                  commentId = comment._id;
+                  done();
+                }
+              );
             }
           );
         });
       });
   });
-  describe("CREATE POST", () => {
-    it("it creates a new post with text only", (done) => {
+  describe("CREATE COMMENT", () => {
+    it("it creates a new comment to an existing post", (done) => {
       chai
         .request(app)
-        .post("/posts")
+        .post("/comments")
         .set({ Authorization: `Bearer ${authToken}` })
-        .set("content-type", "multipart/form-data")
-        .field(
-          "text",
-          "this is a random facebok post. please like, share and make comments"
-        )
+        .send({
+          text: "this is a comment to a random facebook post",
+          postId,
+        })
         .end((error, res) => {
           expect(error).to.be.null;
           expect(res).to.exist;
@@ -57,178 +64,101 @@ describe("POSTS", () => {
           expect(res.body).to.have.property("message");
           expect(res.body).to.have.property("data");
           expect(res.body.data).to.have.deep.property("_id");
-          expect(res.body.data).to.have.deep.property("media");
           expect(res.body.data).to.have.deep.property("text");
-          expect(res.body.data).to.have.deep.property("type");
-          expect(res.body.data.type).to.contain.oneOf(["text", "media"]);
+          expect(res.body.data).to.have.deep.property("author");
           expect(res.body.data.text).to.equal(
-            "this is a random facebok post. please like, share and make comments"
+            "this is a comment to a random facebook post"
           );
           expect(res.body.data.author).to.equal(userId);
           done();
         });
     });
-    it("it creates a new post with text and image only", (done) => {
+    it("it returns a 400 error if comment body is empty", (done) => {
       chai
         .request(app)
-        .post("/posts")
+        .post("/comments")
         .set("Authorization", `Bearer ${authToken}`)
-        .set("content-type", "multipart/form-data")
-        .field(
-          "text",
-          "this is a random facebok post. please like, share and make comments"
-        )
-        .attach(
-          "media",
-          fs.readFileSync(`${__dirname}/files/image1.jpg`),
-          "files/image1.jpg"
-        )
-        .end((error, res) => {
-          expect(error).to.be.null;
-          expect(res).to.exist;
-          expect(res).to.have.status(200);
-          expect(res.body).to.have.property("message");
-          expect(res.body).to.have.property("data");
-          expect(res.body.data).to.have.deep.property("_id");
-          expect(res.body.data).to.have.deep.property("media");
-          expect(res.body.data).to.have.deep.property("text");
-          expect(res.body.data).to.have.deep.property("type");
-          expect(res.body.data.type).to.contain.oneOf(["text", "media"]);
-          expect(res.body.data.text).to.equal(
-            "this is a random facebok post. please like, share and make comments"
-          );
-          expect(res.body.data.media).to.be.an("array");
-          expect(res.body.data.media).to.have.a.lengthOf.greaterThanOrEqual(1);
-          expect(res.body.data.author).to.equal(userId);
-
-          done();
-        });
-    });
-    it("it creates a new post with text and multiple media files", (done) => {
-      chai
-        .request(app)
-        .post("/posts")
-        .set("Authorization", `Bearer ${authToken}`)
-        .set("content-type", "multipart/form-data")
-        .field(
-          "text",
-          "this is a random facebok post. please like, share and make comments"
-        )
-        .attach(
-          "media",
-          fs.readFileSync(`${__dirname}/files/image1.jpg`),
-          "files/image1.jpg"
-        )
-        .attach(
-          "media",
-          fs.readFileSync(`${__dirname}/files/image2.png`),
-          "files/image2.png"
-        )
-        .attach(
-          "media",
-          fs.readFileSync(`${__dirname}/files/image3.gif`),
-          "files/image3.gif"
-        )
-        .end((error, res) => {
-          expect(error).to.be.null;
-          expect(res).to.exist;
-          expect(res).to.have.status(200);
-          expect(res.body).to.have.property("message");
-          expect(res.body).to.have.property("data");
-          expect(res.body.data).to.have.deep.property("_id");
-          expect(res.body.data).to.have.deep.property("media");
-          expect(res.body.data).to.have.deep.property("text");
-          expect(res.body.data).to.have.deep.property("type");
-          expect(res.body.data.type).to.contain.oneOf(["text", "media"]);
-          expect(res.body.data.text).to.equal(
-            "this is a random facebok post. please like, share and make comments"
-          );
-          expect(res.body.data.media).to.be.an("array");
-          expect(res.body.data.media).to.have.a.lengthOf.greaterThanOrEqual(1);
-          expect(res.body.data.author).to.equal(userId);
-          done();
-        });
-    });
-    it("it creates a new post with media files only", (done) => {
-      chai
-        .request(app)
-        .post("/posts")
-        .set("Authorization", `Bearer ${authToken}`)
-        .set("content-type", "multipart/form-data")
-        .field("type", "media")
-        .attach(
-          "media",
-          fs.readFileSync(`${__dirname}/files/vid.mp4`),
-          "files/vid.mp4"
-        )
-        .end((error, res) => {
-          expect(error).to.be.null;
-          expect(res).to.exist;
-          expect(res).to.have.status(200);
-          expect(res.body).to.have.property("message");
-          expect(res.body).to.have.property("data");
-          expect(res.body.data).to.have.deep.property("_id");
-          expect(res.body.data).to.have.deep.property("media");
-          expect(res.body.data).to.have.deep.property("type");
-          expect(res.body.data.type).to.equal("media");
-          expect(res.body.data.media).to.be.an("array");
-          expect(res.body.data.media).to.have.a.lengthOf.greaterThanOrEqual(1);
-          expect(res.body.data.author).to.equal(userId);
-          done();
-        });
-    });
-    it("it returns a 400 error if media file type is invalid", (done) => {
-      chai
-        .request(app)
-        .post("/posts")
-        .set("Authorization", `Bearer ${authToken}`)
-        .set("content-type", "multipart/form-data")
-        .field("type", "media")
-        .attach(
-          "media",
-          fs.readFileSync(`${__dirname}/files/file.pdf`),
-          "files/file.pdf"
-        )
-        .end((error, res) => {
-          expect(error).to.be.null;
-          expect(res).to.exist;
-          expect(res).to.have.status(400);
-          expect(res.body).to.have.property("message");
-          expect(res.body).to.have.property("data");
-          expect(res.body.data).to.be.a("null");
-          expect(res.body.message).to.equal("invalid media file sent");
-          done();
-        });
-    });
-    it("it returns a 400 error if post is empty", (done) => {
-      chai
-        .request(app)
-        .post("/posts")
-        .set("Authorization", `Bearer ${authToken}`)
+        .send({
+          postId,
+        })
         .end((error, res) => {
           expect(error).to.be.null;
           expect(res).to.exist;
           expect(res).to.have.status(400);
           expect(res.body).to.have.property("data");
           expect(res.body).to.have.property("message");
-          expect(res.body.data).to.be.a("null");
+          expect(res.body.data).to.have.property("text");
+          expect(res.body.message).to.equal("request validation failed");
+          done();
+        });
+    });
+    it("it returns a 400 error if postId field is empty", (done) => {
+      chai
+        .request(app)
+        .post("/comments")
+        .set("Authorization", `Bearer ${authToken}`)
+        .send({
+          text: "this is a comment to a random facebook post",
+        })
+        .end((error, res) => {
+          expect(error).to.be.null;
+          expect(res).to.exist;
+          expect(res).to.have.status(400);
+          expect(res.body).to.have.property("data");
+          expect(res.body).to.have.property("message");
+          expect(res.body.data).to.have.property("postId");
+          expect(res.body.message).to.equal("request validation failed");
+          done();
+        });
+    });
+    it("it returns a 400 error if postId is a wrong mongo id", (done) => {
+      chai
+        .request(app)
+        .post("/comments")
+        .set("Authorization", `Bearer ${authToken}`)
+        .send({
+          text: "this is a comment to a random facebook post",
+          postId: wrongMongoId,
+        })
+        .end((error, res) => {
+          expect(error).to.be.null;
+          expect(res).to.exist;
+          expect(res).to.have.status(400);
+          expect(res.body).to.have.property("data");
+          expect(res.body).to.have.property("message");
+          expect(res.body.data).to.have.property("postId");
+          expect(res.body.message).to.equal("request validation failed");
+          done();
+        });
+    });
+    it("it returns a 404 error if post is not found", (done) => {
+      chai
+        .request(app)
+        .post("/comments")
+        .set("Authorization", `Bearer ${authToken}`)
+        .send({
+          text: "this is a comment to a random facebook post",
+          postId: wrongPostId,
+        })
+        .end((error, res) => {
+          expect(error).to.be.null;
+          expect(res).to.exist;
+          expect(res).to.have.status(404);
+          expect(res.body).to.have.property("data");
+          expect(res.body).to.have.property("message");
+          expect(res.body.data).to.be.null;
+          expect(res.body.message).to.equal("post not found");
           done();
         });
     });
     it("it sends a 401 error if authorization token is absent or incorrect", (done) => {
       chai
         .request(app)
-        .post("/posts")
-        .set("content-type", "multipart/form-data")
-        .field(
-          "text",
-          "this is a random facebok post. please like, share and make comments"
-        )
-        .attach(
-          "media",
-          fs.readFileSync(`${__dirname}/files/image1.jpg`),
-          "files/image1.jpg"
-        )
+        .post("/comments")
+        .send({
+          text: "this is a comment to a random facebook post",
+          postId: wrongPostId,
+        })
         .end((error, res) => {
           expect(error).to.be.null;
           expect(res).to.exist;
@@ -240,11 +170,11 @@ describe("POSTS", () => {
         });
     });
   });
-  describe("FETCH POSTS", () => {
-    it("it fetches created posts", (done) => {
+  describe("FETCH COMMENTS", () => {
+    it("it fetches comments", (done) => {
       chai
         .request(app)
-        .get("/posts")
+        .get("/comments")
         .set("Authorization", `Bearer ${authToken}`)
         .end((error, res) => {
           expect(error).to.be.null;
@@ -261,10 +191,66 @@ describe("POSTS", () => {
           done();
         });
     });
+    it("it fetches comments for a post", (done) => {
+      chai
+        .request(app)
+        .get(`/comments?post=${postId}`)
+        .set("Authorization", `Bearer ${authToken}`)
+        .end((error, res) => {
+          expect(error).to.be.null;
+          expect(res).to.exist;
+          expect(res).to.have.status(200);
+          expect(res.body).to.be.an("object");
+          expect(res.body).to.haveOwnProperty("data");
+          expect(res.body).to.haveOwnProperty("message");
+          expect(res.body.data).to.be.an("object");
+          expect(res.body.data).to.haveOwnProperty("data");
+          expect(res.body.message).to.be.a("string");
+          expect(res.body.data.data).to.be.a("array");
+          expect(res.body.data.data).to.have.lengthOf.greaterThanOrEqual(0);
+          done();
+        });
+    });
+    it("it should return an empty array for a wrong postId", (done) => {
+      chai
+        .request(app)
+        .get(`/comments?post=${wrongPostId}`)
+        .set("Authorization", `Bearer ${authToken}`)
+        .end((error, res) => {
+          expect(error).to.be.null;
+          expect(res).to.exist;
+          expect(res).to.have.status(200);
+          expect(res.body).to.be.an("object");
+          expect(res.body).to.haveOwnProperty("data");
+          expect(res.body).to.haveOwnProperty("message");
+          expect(res.body.data).to.be.an("object");
+          expect(res.body.data).to.haveOwnProperty("data");
+          expect(res.body.message).to.be.a("string");
+          expect(res.body.data.data).to.be.a("array");
+          expect(res.body.data.data).to.have.length(0);
+          done();
+        });
+    });
+    it("it returns a 400 error if postId is a wrong mongo id", (done) => {
+      chai
+        .request(app)
+        .get(`/comments?post=${wrongMongoId}`)
+        .set("Authorization", `Bearer ${authToken}`)
+        .end((error, res) => {
+          expect(error).to.be.null;
+          expect(res).to.exist;
+          expect(res).to.have.status(400);
+          expect(res.body).to.have.property("data");
+          expect(res.body).to.have.property("message");
+          expect(res.body.data).to.be.null;
+          expect(res.body.message).to.match(/invalid parameter sent/g);
+          done();
+        });
+    });
     it("it returns a 401 error if request is unauthenticated", (done) => {
       chai
         .request(app)
-        .get("/posts")
+        .get("/comments")
         .end((error, res) => {
           expect(error).to.be.null;
           expect(res).to.exist;
@@ -278,11 +264,11 @@ describe("POSTS", () => {
         });
     });
   });
-  describe("FETCH POST", () => {
-    it("it fetches a single post", (done) => {
+  describe("FETCH COMMENT", () => {
+    it("it fetches a single comment", (done) => {
       chai
         .request(app)
-        .get(`/posts/${postId}`)
+        .get(`/comments/${dummyCommentId}`)
         .set("Authorization", `Bearer ${authToken}`)
         .end((error, res) => {
           expect(error).to.be.null;
@@ -295,14 +281,14 @@ describe("POSTS", () => {
           expect(res.body.message).to.be.a("string");
           expect(res.body.data).to.be.an("object");
           expect(res.body.data).to.haveOwnProperty("_id");
-          expect(res.body.data).to.haveOwnProperty("type");
+          expect(res.body.data).to.haveOwnProperty("text");
           done();
         });
     });
-    it("it returns a 404 error if post is not found", (done) => {
+    it("it returns a 404 error if comment is not found", (done) => {
       chai
         .request(app)
-        .get(`/posts/${wrongPostId}`)
+        .get(`/comments/${wrongCommentId}`)
         .set("Authorization", `Bearer ${authToken}`)
         .end((error, res) => {
           expect(error).to.be.null;
@@ -313,14 +299,14 @@ describe("POSTS", () => {
           expect(res.body).to.haveOwnProperty("message");
           expect(res.body.data).to.be.a("null");
           expect(res.body.message).to.be.a("string");
-          expect(res.body.message).to.equal("post not found");
+          expect(res.body.message).to.equal("comment not found");
           done();
         });
     });
-    it("it returns a 400 error if post id is an invalid object id", (done) => {
+    it("it returns a 400 error if comment id is an invalid object id", (done) => {
       chai
         .request(app)
-        .get(`/posts/${wrongMongoId}`)
+        .get(`/comments/${wrongMongoId}`)
         .set("Authorization", `Bearer ${authToken}`)
         .end((error, res) => {
           expect(error).to.be.null;
@@ -337,7 +323,7 @@ describe("POSTS", () => {
     it("it returns a 401 error if authorization is absent or incorrect", (done) => {
       chai
         .request(app)
-        .get(`/posts/${postId}`)
+        .get(`/comments/${dummyCommentId}`)
         .end((error, res) => {
           expect(error).to.be.null;
           expect(res).to.exist;
@@ -351,14 +337,13 @@ describe("POSTS", () => {
         });
     });
   });
-  describe("UPDATE POST", () => {
-    it("it updates an existing post", (done) => {
+  describe("UPDATE COMMENT", () => {
+    it("it updates an existing comment", (done) => {
       chai
         .request(app)
-        .put(`posts/${postId}`)
+        .put(`comments/${commentId}`)
         .set({ Authorization: `Bearer ${authToken}` })
-        .set("content-type", "multipart/form-data")
-        .field("text", "this is an update to a random facebok post")
+        .send({ text: "this is an update to a random facebok comment" })
         .end((error, res) => {
           expect(error).to.be.null;
           expect(res).to.exist;
@@ -366,10 +351,9 @@ describe("POSTS", () => {
           expect(res.body).to.have.property("message");
           expect(res.body).to.have.property("data");
           expect(res.body.data).to.have.deep.property("_id");
-          expect(res.body.data).to.have.deep.property("media");
           expect(res.body.data).to.have.deep.property("text");
           expect(res.body.data.text).to.equal(
-            "this is an update to a random facebok post"
+            "this is an update to a random facebok comment"
           );
           done();
         });
@@ -377,8 +361,11 @@ describe("POSTS", () => {
     it("it returns a 403 error if user is not author", (done) => {
       chai
         .request(app)
-        .put(`posts/${dummyPostId}`)
+        .put(`comments/${dummyCommentId}`)
         .set("Authorization", `Bearer ${authToken}`)
+        .send({
+          text: "this is an update to a comment",
+        })
         .end((error, res) => {
           expect(error).to.be.null;
           expect(res).to.exist;
@@ -393,11 +380,14 @@ describe("POSTS", () => {
           done();
         });
     });
-    it("it returns a 404 error if post is not found", (done) => {
+    it("it returns a 404 error if comment is not found", (done) => {
       chai
         .request(app)
-        .put(`/posts/${wrongPostId}`)
+        .put(`/comments/${wrongCommentId}`)
         .set("Authorization", `Bearer ${authToken}`)
+        .send({
+          text: "this is an update to a comment",
+        })
         .end((error, res) => {
           expect(error).to.be.null;
           expect(res).to.exist;
@@ -407,15 +397,18 @@ describe("POSTS", () => {
           expect(res.body).to.haveOwnProperty("message");
           expect(res.body.data).to.be.a("null");
           expect(res.body.message).to.be.a("string");
-          expect(res.body.message).to.equal("post not found");
+          expect(res.body.message).to.equal("comment not found");
           done();
         });
     });
     it("it returns a 400 error if post id is an invalid object id", (done) => {
       chai
         .request(app)
-        .put(`/posts/${wrongMongoId}`)
+        .put(`/comments/${wrongMongoId}`)
         .set("Authorization", `Bearer ${authToken}`)
+        .send({
+          text: "this is an update to a comment",
+        })
         .end((error, res) => {
           expect(error).to.be.null;
           expect(res).to.exist;
@@ -431,17 +424,10 @@ describe("POSTS", () => {
     it("it sends a 401 error if authorization token is absent or incorrect", (done) => {
       chai
         .request(app)
-        .put(`/posts/${postId}`)
-        .set("content-type", "multipart/form-data")
-        .field(
-          "text",
-          "this is a random facebok post. please like, share and make comments"
-        )
-        .attach(
-          "media",
-          fs.readFileSync(`${__dirname}/files/image1.jpg`),
-          "files/image1.jpg"
-        )
+        .put(`/comments/${commentId}`)
+        .send({
+          text: "this is an update to a comment",
+        })
         .end((error, res) => {
           expect(error).to.be.null;
           expect(res).to.exist;
@@ -450,11 +436,11 @@ describe("POSTS", () => {
         });
     });
   });
-  describe("DELETE POST", () => {
-    it("it deletes an existing post", (done) => {
+  describe("DELETE COMMENT", () => {
+    it("it deletes an existing comment", (done) => {
       chai
         .request(app)
-        .delete(`/posts/${postId}`)
+        .delete(`/comments/${commentId}`)
         .set("Authorization", `Bearer ${authToken}`)
         .end((error, res) => {
           expect(error).to.be.null;
@@ -468,10 +454,10 @@ describe("POSTS", () => {
           done();
         });
     });
-    it("it returns a 404 error if post is not found", (done) => {
+    it("it returns a 404 error if comment is not found", (done) => {
       chai
         .request(app)
-        .delete(`/posts/${wrongPostId}`)
+        .delete(`/comments/${wrongCommentId}`)
         .set("Authorization", `Bearer ${authToken}`)
         .end((error, res) => {
           expect(error).to.be.null;
@@ -482,14 +468,14 @@ describe("POSTS", () => {
           expect(res.body).to.haveOwnProperty("message");
           expect(res.body.data).to.be.a("null");
           expect(res.body.message).to.be.a("string");
-          expect(res.body.message).to.equal("post not found");
+          expect(res.body.message).to.equal("comment not found");
           done();
         });
     });
-    it("it returns a 400 error if post id is an invalid object id", (done) => {
+    it("it returns a 400 error if comment id is an invalid object id", (done) => {
       chai
         .request(app)
-        .delete(`/posts/${wrongMongoId}`)
+        .delete(`/comments/${wrongMongoId}`)
         .set("Authorization", `Bearer ${authToken}`)
         .end((error, res) => {
           expect(error).to.be.null;
@@ -506,7 +492,7 @@ describe("POSTS", () => {
     it("it returns a 403 error if user is not author", (done) => {
       chai
         .request(app)
-        .delete(`posts/${dummyPostId}`)
+        .delete(`comment/${dummyCommentId}`)
         .set("Authorization", `Bearer ${authToken}`)
         .end((error, res) => {
           expect(error).to.be.null;
@@ -525,7 +511,7 @@ describe("POSTS", () => {
     it("it returns a 401 error if authorization is absent or incorrect", (done) => {
       chai
         .request(app)
-        .delete(`/posts/${postId}`)
+        .delete(`/comments/${commentId}`)
         .end((error, res) => {
           expect(error).to.be.null;
           expect(res).to.exist;
